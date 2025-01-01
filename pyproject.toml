@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nalenc"
+version = "1.0.0"
+description = "Lightweight symetric encryption"
+readme = "README.md"
+authors = [{ name = "David Lishchyshen", email = "microdaika1@gmail.com" }]
+keywords = ["encryption", "lightweight", "symetric", "secure"]
+requires-python = ">=3.6"
+classifiers = [
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed"
+]
+
+[project.urls]
+Homepage = "https://github.com/AsfhtgkDavid/NAL-Encryption"
