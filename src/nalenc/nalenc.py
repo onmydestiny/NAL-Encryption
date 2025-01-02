@@ -18,10 +18,9 @@
 
 from collections import deque
 from itertools import cycle
-from typing import Optional, Iterable
-from typing import TypeAlias
+from typing import Iterable, Union
 
-input_type: TypeAlias = str | bytes | Iterable[int]
+input_type = Union[str, bytes, Iterable[int]]
 
 class NALEnc:
     def __init__(self, passwd: input_type):
