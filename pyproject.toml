@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nalenc"
-version = "1.0.0"
+version = "1.0.1"
 description = "Lightweight symetric encryption"
 readme = "README.md"
 authors = [{ name = "David Lishchyshen", email = "microdaika1@gmail.com" }]
