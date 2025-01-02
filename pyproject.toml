@@ -9,7 +9,7 @@ description = "Lightweight symetric encryption"
 readme = "README.md"
 authors = [{ name = "David Lishchyshen", email = "microdaika1@gmail.com" }]
 keywords = ["encryption", "lightweight", "symetric", "secure"]
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 classifiers = [
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
