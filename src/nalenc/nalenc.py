@@ -17,25 +17,22 @@
 """
 
 from collections import deque
-from itertools import cycle
-from typing import Iterable, Union
+from typing import Iterable
+import numpy as np
+from numpy import typing as npt
 
-input_type = Union[str, bytes, Iterable[int]]
+input_type = str | bytes | Iterable[int] | npt.NDArray[np.uint8]
 
 class NALEnc:
     def __init__(self, passwd: input_type):
         passwd_encoded = self.__encode_value(passwd)
         if len(passwd_encoded) != 512: raise ValueError("passwd len must equal 512 byte")
-        self.__validate_data(passwd_encoded)
         self.__passwd = passwd_encoded
         self.__prepare_passwds()
 
 
     def encrypt(self, msg: input_type) -> list[int]:
         message = self.__encode_value(msg)
-
-        self.__validate_data(message)
-
         message = self.__finish_message(message)
 
         parts = self.__split_message(message)
@@ -56,6 +53,7 @@ class NALEnc:
 
 
     def decrypt(self, msg: input_type) -> list[int]:
+        return self.__prepared_passwds
         message = self.__encode_value(msg)
 
         self.__validate_data(message)
@@ -94,50 +92,46 @@ class NALEnc:
 
 
     def __prepare_passwds(self) -> None:
-        self.__prepared_passwds: list[list[int]] = [self.__passwd.copy()]
-        for i in range(0, 255):
+        self.__prepared_passwds = np.empty((256, 512), np.uint8)
+        self.__prepared_passwds[0] = self.__passwd
+        idx_array = np.arange(512)
+        for i in range(1, 256):
             xor_value = self.__prepared_passwds[i-1][i]
-            self.__prepared_passwds.append([self.__prepared_passwds[i-1][k] ^ xor_value for k in range(len(self.__passwd)) if k != i])
-            self.__prepared_passwds[i+1].insert(i, xor_value)
+            self.__prepared_passwds[i] = np.where(idx_array != i, self.__prepared_passwds[i-1] ^ xor_value, self.__prepared_passwds[i-1])
 
 
-    def __finish_message(self, msg: list[int]) -> list[int]:
+    def __finish_message(self, msg: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
         additional_len = 2046 - (len(msg) % 2046) + (len(msg) // 2048) * 2
         if additional_len != 2046 or len(msg) % 2048 == 0:
+            res = np.empty(len(msg)+additional_len+2, np.uint8)
+            res[2:len(msg)+2] = msg
             l1, l2 = additional_len >> 8, additional_len & 0xFF
-            for _, k in zip(range(additional_len), cycle(self.__passwd)):
-                msg.append(msg[k % len(msg)] ^ msg[(k+1) % len(msg)])
-            msg.insert(0, l2)
-            msg.insert(0, l1)
+            current_len = len(msg)
+            for i in range(additional_len):
+                k = int(self.__passwd[i % len(self.__passwd)])
+                res[i + 2 + len(msg)] = np.bitwise_xor(res[(k % current_len) + 2], res[((k + 1) % current_len) + 2])
+                current_len += 1
+            res[0] = l1
+            res[1] = l2
         else:
-            msg.insert(0, 0)
-            msg.insert(0, 0)
-        return msg
-
-
-    def __validate_data(self, data: list[int]) -> None:
-        if not all(isinstance(i, int) for i in data): raise TypeError("all list element must be int")
-        if not self.__validate_list_values(data): raise ValueError("every msg element must be less 256 and bigger or equal to 0")
+            res = np.empty(len(msg)+2, np.uint8)
+            res[2:len(msg)+2] = msg
+            res[:2] = np.zeros(2, np.uint8)
+        return res
 
 
     @staticmethod
-    def __split_message(msg: list[int]) -> list[list[int]]:
-        return [msg[int(i*512*len(msg)/2048):int((i+1)*512*len(msg)/2048)] for i in range(4)]
+    def __split_message(msg: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
+        return np.reshape(msg, (4, int(len(msg)/4)))
 
 
     @staticmethod
-    def __encode_value(value: input_type) -> list[int]:
-        if isinstance(value, str): return list(value.encode())
-        elif isinstance(value, bytes): return list(value)
-        elif isinstance(value, list): return value.copy()
-        else: raise TypeError("argument must be str | bytes | list[int]")
-
-
-    @staticmethod
-    def __validate_list_values(lst: list[int]) -> bool:
-        for i in lst:
-            if i < 0 or i > 255: return False
-        return True
+    def __encode_value(value: input_type) -> npt.NDArray[np.uint8]:
+        try:
+            if isinstance(value, str): return np.fromiter(value.encode(), np.uint8)
+            else: return np.fromiter(value, np.uint8)
+        except ValueError:
+            raise TypeError("argument must be str | bytes | Iterable[int] | NDArray[uint8]")
 
 
     @staticmethod
