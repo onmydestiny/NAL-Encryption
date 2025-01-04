@@ -53,7 +53,6 @@ class NALEnc:
 
 
     def decrypt(self, msg: input_type) -> list[int]:
-        return self.__prepared_passwds
         message = self.__encode_value(msg)
 
         self.__validate_data(message)
