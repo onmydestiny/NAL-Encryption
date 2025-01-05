@@ -91,12 +91,13 @@ class NALEnc:
 
 
     def __prepare_passwds(self) -> None:
+        idx_array = np.arange(512)
         self.__prepared_passwds = np.empty((256, 512), np.uint8)
         self.__prepared_passwds[0] = self.__passwd
-        idx_array = np.arange(512)
-        for i in range(1, 256):
+        self.__prepared_passwds[1] = np.where(idx_array != 1, self.__prepared_passwds[0] ^ self.__prepared_passwds[0, 0], self.__prepared_passwds[0])
+        for i in range(1, 255):
             xor_value = self.__prepared_passwds[i-1][i]
-            self.__prepared_passwds[i] = np.where(idx_array != i, self.__prepared_passwds[i-1] ^ xor_value, self.__prepared_passwds[i-1])
+            self.__prepared_passwds[i+1] = np.where(idx_array != i, self.__prepared_passwds[i-1] ^ xor_value, self.__prepared_passwds[i-1])
 
 
     def __finish_message(self, msg: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
