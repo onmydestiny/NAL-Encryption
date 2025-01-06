@@ -20,5 +20,5 @@ from .nalenc import NALEnc
 
 __all__ = ["NALEnc"]
 __author__ = 'David Lishchyshen'
-__version__ = '1.0.1'
+__version__ = '1.2.0dev'
 __email__ = 'microdaika1@gmail.com'
