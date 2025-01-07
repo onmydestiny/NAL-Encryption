@@ -115,8 +115,8 @@ class NALEnc:
                 return np.fromiter(value.encode(), np.uint8)
             else:
                 return np.fromiter(value, np.uint8)
-        except ValueError:
-            raise TypeError("argument must be str | bytes | Iterable[int] | NDArray[uint8]")
+        except (ValueError, TypeError):
+            raise TypeError("Argument must be str | bytes | Iterable[int] | NDArray[uint8]")
 
     @staticmethod
     def __cut_message(msg: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
