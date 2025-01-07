@@ -1,13 +1,13 @@
 name: Python tests
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   unittests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
 
     env:
       PYTHONPATH: ${{ github.workspace }}
@@ -20,6 +20,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Run Tests
         run: |
+          pip install -r requirements.txt
           cd tests
           python -m unittest nalenc.py
 
@@ -27,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
 
     env:
       PYTHONPATH: ${{ github.workspace }}
@@ -41,4 +42,5 @@ jobs:
       - name: Run Tests
         run: |
           pip install mypy
+          pip install -r requirements.txt
           python -m mypy src/nalenc/*
