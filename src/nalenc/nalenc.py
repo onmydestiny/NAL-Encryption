@@ -86,7 +86,7 @@ class NALEnc:
                                                       self.__prepared_passwds[i - 1])
 
     def __finish_message(self, msg: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
-        additional_len = 2046 - (len(msg) % 2046) + (len(msg) // 2048) * 2
+        additional_len = 2046 - (len(msg) % 2046) + ((len(msg) // 2048) * 2) % 2046
         if additional_len != 2046 or len(msg) % 2048 == 0:
             res = np.empty(len(msg) + additional_len + 2, np.uint8)
             res[2:len(msg) + 2] = msg
