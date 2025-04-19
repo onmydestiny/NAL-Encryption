@@ -1,8 +1,9 @@
 import argparse
 import sys
-import os
 import base64
-import random
+
+import numpy as np
+
 from .nalenc import NALEnc
 from . import __version__ as nalenc_version
 
@@ -102,7 +103,7 @@ def write_output(data: bytes, output_path: str | None, ascii_format: bool, data_
                 sys.exit(1)
 
 def handle_generate_key(args: argparse.Namespace):
-    key_bytes = bytes([random.randint(0, 255) for _ in range(EXPECTED_KEY_LEN)])
+    key_bytes = np.random.randint(0, 256, size=(EXPECTED_KEY_LEN,), dtype=np.uint8).tobytes()
     write_output(key_bytes, args.output, args.ascii, 'key')
 
 def handle_encrypt(args: argparse.Namespace):
