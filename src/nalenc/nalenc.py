@@ -16,10 +16,11 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from collections import deque
 from typing import Iterable
 import numpy as np
 from numpy import typing as npt
+
+from .helpers import crypt_parts
 
 input_type = str | bytes | Iterable[int] | npt.NDArray[np.uint8]
 
@@ -30,7 +31,6 @@ class NALEnc:
         if len(passwd_encoded) != 512: raise ValueError("passwd len must equal 512 byte")
         self.__passwd = passwd_encoded
         self.__prepare_passwds()
-        self.__arange = np.arange(512)[None, :]
 
     def encrypt(self, msg: input_type) -> list[int]:
         message = self.__encode_value(msg)
@@ -38,11 +38,11 @@ class NALEnc:
 
         parts = self.__split_message(message)
 
-        n_shifts = np.arange(len(parts[0]) // 512)
-
         for i in range(256):
             parts[:3] = parts[:3] ^ parts[1:4]
-            parts = np.array([self.__crypt_part(part, i, idx, n_shifts) for idx, part in enumerate(parts)],np.uint8)  # type: ignore
+            # parts = np.array([crypt_part(part, i, idx, self.__prepared_passwds)  # type: ignore
+            #                   for idx, part in enumerate(parts)], np.uint8)
+            parts = crypt_parts(parts, i, self.__prepared_passwds)
             parts = np.vstack((parts[-1:], parts[:-1]))
 
         res = np.ravel(parts)
@@ -56,29 +56,17 @@ class NALEnc:
 
         assert parts.ndim == 2
 
-        n_shifts = np.arange(len(parts[0]) // 512)
-
         for i in range(256):
             parts = np.vstack((parts[1:], parts[:1]))
-            parts = np.array([self.__crypt_part(part, i, idx, n_shifts, True) for idx, part in enumerate(parts)], np.uint8) # type: ignore
+            # parts = np.array([crypt_part(part, i, idx, self.__prepared_passwds, True)  # type: ignore
+            #                   for idx, part in enumerate(parts)], np.uint8)
+            parts = crypt_parts(parts, i, self.__prepared_passwds, True)
             for k in range(3):
                 parts[2 - k] = parts[2 - k] ^ parts[3 - k]
 
         res = np.ravel(parts)
 
         return self.__cut_message(res).tolist() # type: ignore
-
-    def __crypt_part(self, part: npt.NDArray[np.uint8], i: int, part_num: int,
-                     n_shifts: npt.NDArray[np.uint], decrypt: bool = False) -> npt.NDArray[np.uint8]:
-        if len(part) % 512 != 0 or len(part) == 0: raise ValueError("Part length must be equal 526k, k != 0")
-        used_prepared_passwd = self.__prepared_passwds[-i-1 if decrypt else i]
-        shifts = n_shifts + part_num
-
-        idx = (self.__arange - shifts[:, None]) % 512
-        passwd = used_prepared_passwd[idx].reshape(-1)
-
-        part = part ^ passwd
-        return part
 
     def __prepare_passwds(self) -> None:
         idx_array = np.arange(512)
