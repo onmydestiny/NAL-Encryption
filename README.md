@@ -147,6 +147,24 @@ nalenc encrypt -k KEY_FILE [OPTIONS] [INPUT_FILE]
 *   `-o, --output FILE`: Output file for encrypted data (default: stdout).
 *   `-a, --ascii`: Output result in ASCII format (Base64 with headers `----BEGIN NAL MESSAGE----` / `----END NAL MESSAGE----`).
 
+#### 3. Decrypt Data (`decrypt`)
+
+Decrypts data from a file or stdin using a specified key.
+
+```bash
+nalenc decrypt -k KEY_FILE [OPTIONS] [INPUT_FILE]
+```
+
+**Arguments:**
+
+*   `INPUT_FILE`: Input file to decrypt (binary or ASCII, default: stdin).
+
+**Options:**
+
+*   `-k, --key FILE`: **(Required)** Encryption key file (binary or ASCII).
+*   `-o, --output FILE`: Output file for decrypted data (default: stdout).
+*   `-a, --ascii`: Output result in ASCII format. (Note: Only affects output format; input format is auto-detected if it uses the standard headers).
+
 ### 📂 Working with Binary Files
 
 NALEnc supports encrypting and decrypting binary files. Read the file as binary data, process it, and save the result. Cast the encrypted data to `bytes` before writing to a file.
