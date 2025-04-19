@@ -30,6 +30,7 @@ class NALEnc:
         if len(passwd_encoded) != 512: raise ValueError("passwd len must equal 512 byte")
         self.__passwd = passwd_encoded
         self.__prepare_passwds()
+        self.__arange = np.arange(512)[None, :]
 
     def encrypt(self, msg: input_type) -> list[int]:
         message = self.__encode_value(msg)
@@ -37,10 +38,12 @@ class NALEnc:
 
         parts = self.__split_message(message)
 
+        n_shifts = np.arange(len(parts[0]) // 512)
+
         for i in range(256):
             parts[:3] = parts[:3] ^ parts[1:4]
-            parts = np.array([self.__crypt_part(part, i, idx) for idx, part in enumerate(parts)],np.uint8)  # type: ignore
-            parts = np.roll(parts, 1, 0)
+            parts = np.array([self.__crypt_part(part, i, idx, n_shifts) for idx, part in enumerate(parts)],np.uint8)  # type: ignore
+            parts = np.vstack((parts[-1:], parts[:-1]))
 
         res = np.ravel(parts)
 
@@ -53,9 +56,11 @@ class NALEnc:
 
         assert parts.ndim == 2
 
+        n_shifts = np.arange(len(parts[0]) // 512)
+
         for i in range(256):
-            parts = np.roll(parts, -1, 0)
-            parts = np.array([self.__crypt_part(part, i, idx, True) for idx, part in enumerate(parts)], np.uint8) # type: ignore
+            parts = np.vstack((parts[1:], parts[:1]))
+            parts = np.array([self.__crypt_part(part, i, idx, n_shifts, True) for idx, part in enumerate(parts)], np.uint8) # type: ignore
             for k in range(3):
                 parts[2 - k] = parts[2 - k] ^ parts[3 - k]
 
@@ -64,11 +69,13 @@ class NALEnc:
         return self.__cut_message(res).tolist() # type: ignore
 
     def __crypt_part(self, part: npt.NDArray[np.uint8], i: int, part_num: int,
-                     decrypt: bool = False) -> npt.NDArray[np.uint8]:
+                     n_shifts: npt.NDArray[np.uint], decrypt: bool = False) -> npt.NDArray[np.uint8]:
         if len(part) % 512 != 0 or len(part) == 0: raise ValueError("Part length must be equal 526k, k != 0")
         used_prepared_passwd = self.__prepared_passwds[-i-1 if decrypt else i]
-        shifts = np.arange(len(part) // 512) + part_num
-        passwd = np.concatenate([np.roll(used_prepared_passwd, shift) for shift in shifts])
+        shifts = n_shifts + part_num
+
+        idx = (self.__arange - shifts[:, None]) % 512
+        passwd = used_prepared_passwd[idx].reshape(-1)
 
         part = part ^ passwd
         return part
