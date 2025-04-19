@@ -16,10 +16,11 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from collections import deque
 from typing import Iterable
 import numpy as np
 from numpy import typing as npt
+
+from .helpers import crypt_parts
 
 input_type = str | bytes | Iterable[int] | npt.NDArray[np.uint8]
 
@@ -39,8 +40,10 @@ class NALEnc:
 
         for i in range(256):
             parts[:3] = parts[:3] ^ parts[1:4]
-            parts = np.array([self.__crypt_part(part, i, idx) for idx, part in enumerate(parts)],np.uint8)  # type: ignore
-            parts = np.roll(parts, 1, 0)
+            # parts = np.array([crypt_part(part, i, idx, self.__prepared_passwds)  # type: ignore
+            #                   for idx, part in enumerate(parts)], np.uint8)
+            parts = crypt_parts(parts, i, self.__prepared_passwds)
+            parts = np.vstack((parts[-1:], parts[:-1]))
 
         res = np.ravel(parts)
 
@@ -54,24 +57,16 @@ class NALEnc:
         assert parts.ndim == 2
 
         for i in range(256):
-            parts = np.roll(parts, -1, 0)
-            parts = np.array([self.__crypt_part(part, i, idx, True) for idx, part in enumerate(parts)], np.uint8) # type: ignore
+            parts = np.vstack((parts[1:], parts[:1]))
+            # parts = np.array([crypt_part(part, i, idx, self.__prepared_passwds, True)  # type: ignore
+            #                   for idx, part in enumerate(parts)], np.uint8)
+            parts = crypt_parts(parts, i, self.__prepared_passwds, True)
             for k in range(3):
                 parts[2 - k] = parts[2 - k] ^ parts[3 - k]
 
         res = np.ravel(parts)
 
         return self.__cut_message(res).tolist() # type: ignore
-
-    def __crypt_part(self, part: npt.NDArray[np.uint8], i: int, part_num: int,
-                     decrypt: bool = False) -> npt.NDArray[np.uint8]:
-        if len(part) % 512 != 0 or len(part) == 0: raise ValueError("Part length must be equal 526k, k != 0")
-        used_prepared_passwd = self.__prepared_passwds[-i-1 if decrypt else i]
-        shifts = np.arange(len(part) // 512) + part_num
-        passwd = np.concatenate([np.roll(used_prepared_passwd, shift) for shift in shifts])
-
-        part = part ^ passwd
-        return part
 
     def __prepare_passwds(self) -> None:
         idx_array = np.arange(512)
@@ -86,7 +81,7 @@ class NALEnc:
                                                       self.__prepared_passwds[i - 1])
 
     def __finish_message(self, msg: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
-        additional_len = 2046 - (len(msg) % 2046) + ((len(msg) // 2048) * 2) % 2046
+        additional_len = (2048 - (len(msg) + 2) % 2048) % 2048
         if additional_len != 2046 or len(msg) % 2048 == 0:
             res = np.empty(len(msg) + additional_len + 2, np.uint8)
             res[2:len(msg) + 2] = msg
