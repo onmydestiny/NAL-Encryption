@@ -10,6 +10,7 @@
 - **Password Support:** Accepts passwords as strings, bytes, lists of integers (0-255), or NumPy arrays.
 - **Optimized for Performance:** Best suited for messages of size `2046n`, where `n ∈ N`.
 - **Powered by NumPy:** Leverages NumPy for efficient operations.
+- **Command-Line Interface:** Includes a `nalenc` CLI tool for easy file encryption/decryption and key generation directly from your terminal.
 
 ---
 
@@ -89,6 +90,80 @@ decrypted_binary = nal.decrypt(encrypted_binary)
 # Decrypt a NumPy array
 decrypted_array = nal.decrypt(encrypted_array)
 ```
+
+## 💻 Command-Line Interface (CLI) Usage
+
+The `nalenc` command-line tool allows for quick encryption, decryption, and key generation without writing Python code.
+
+### Verify Installation
+
+```bash
+nalenc --version
+```
+
+### CLI Commands
+
+The tool provides three main commands: `generate-key`, `encrypt`, and `decrypt`.
+
+#### 1. Generate Key (`generate-key`)
+
+Creates a new 512-byte encryption key.
+
+```bash
+nalenc generate-key [OPTIONS]
+```
+
+**Options:**
+
+*   `-o, --output FILE`: Output file for the key (default: stdout).
+*   `-a, --ascii`: Output key in ASCII format (Base64 with headers `----BEGIN NAL KEY----` / `----END NAL KEY----`).
+
+**Examples:**
+
+*   Generate a binary key file:
+    ```bash
+    nalenc generate-key > mykey.bin
+    ```
+*   Generate an ASCII key file:
+    ```bash
+    nalenc generate-key -o mykey.key -a
+    ```
+
+#### 2. Encrypt Data (`encrypt`)
+
+Encrypts data from a file or stdin using a specified key.
+
+```bash
+nalenc encrypt -k KEY_FILE [OPTIONS] [INPUT_FILE]
+```
+
+**Arguments:**
+
+*   `INPUT_FILE`: Input file to encrypt (default: stdin).
+
+**Options:**
+
+*   `-k, --key FILE`: **(Required)** Encryption key file (binary or ASCII).
+*   `-o, --output FILE`: Output file for encrypted data (default: stdout).
+*   `-a, --ascii`: Output result in ASCII format (Base64 with headers `----BEGIN NAL MESSAGE----` / `----END NAL MESSAGE----`).
+
+#### 3. Decrypt Data (`decrypt`)
+
+Decrypts data from a file or stdin using a specified key.
+
+```bash
+nalenc decrypt -k KEY_FILE [OPTIONS] [INPUT_FILE]
+```
+
+**Arguments:**
+
+*   `INPUT_FILE`: Input file to decrypt (binary or ASCII, default: stdin).
+
+**Options:**
+
+*   `-k, --key FILE`: **(Required)** Encryption key file (binary or ASCII).
+*   `-o, --output FILE`: Output file for decrypted data (default: stdout).
+*   `-a, --ascii`: Output result in ASCII format. (Note: Only affects output format; input format is auto-detected if it uses the standard headers).
 
 ### 📂 Working with Binary Files
 
